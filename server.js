@@ -222,42 +222,18 @@ app.get("/getAllStores", async (req, res) => {
     res.status(500).json({ status: "error", message: "Internal Server Error" });
   }
 });
-const isPortInUse = (port, callback) => {
-  const server = net.createServer();
-  server.once('error', (err) => {
-    if (err.code === 'EADDRINUSE') {
-      callback(true);
-    } else {
-      callback(false);
-    }
-  });
-  server.once('listening', () => {
-    server.close();
-    callback(false);
-  });
-  server.listen(port);
-};
-
-async function startServer(port) {
-  try {
-    await mongoose.connect(DB);
-
-    isPortInUse(port, (inUse) => {
-      if (inUse) {
-        console.error(`Port ${port} is already in use. Trying the next port...`);
-        startServer(port + 1);
-      } else {
-               app.listen(port, () => {
-          console.log(`Server listening on port ${port}`);
-         
-        });
-      }
+mongoose
+  .connect(DB)
+  .then(() => {
+    app.listen(HTTP_PORT, () => {
+      console.log(`server listening on: ${HTTP_PORT}`);
     });
-  } catch (err) {
-    console.error(err);
-  }
-}
+  })
+  .catch((err) => {
+    console.log(err);
+  });
 
 // Start the server on an available port
-
-startServer(HTTP_PORT);
+app.get('/', (req, res) => {
+  res.send('Hey this is my API running 🥳')
+})
