@@ -13,7 +13,8 @@ app.use(bodyParser.json());
 const mongoose = require("mongoose");
 let Schema = mongoose.Schema;
 const HTTP_PORT = process.env.PORT || 8080;
-const DB =process.env.DB;
+const DB = "mongodb+srv://kadodkajan:bVzNQ8UYwLFkhePC@cluster0.5tu5clo.mongodb.net/?retryWrites=true&w=majority"
+
 const cors = require("cors");
 const net = require('net');
 let dynamicPort = HTTP_PORT;
