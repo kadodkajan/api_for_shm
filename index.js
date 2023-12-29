@@ -223,6 +223,51 @@ app.get("/getAllStores", async (req, res) => {
     res.status(500).json({ status: "error", message: "Internal Server Error" });
   }
 });
+
+//user login
+
+app.post("/login", async (req, res) => {
+  try {
+    const { user_id, user_auth } = req.body;
+    // Find the user by user_id
+    const user = await User.findOne({ user_id: user_id });
+    if (!user) {
+      // User not found
+      return res
+        .status(404)
+        .json({ status: "error", message: "User not founssd" });
+    }
+    if (String(user.user_auth) === String(user_auth)) {
+      // Passwords match
+      const { user_id, user_name, user_location } = user; // Extract additional user details
+
+      res.json({
+        status: "success",
+        message: "Login successful",
+        user: { user_id, user_name, user_location },
+      });
+    } else {
+      // Passwords do not match
+      res.status(401).json({ status: "error", message: "Incorrect password" });
+    }
+  } catch (error) {
+    // Send an error response if an exception occurs
+    res.status(500).json({ status: "error", message: "Internal Server Error" });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
 mongoose
   .connect(DB)
   .then(() => {
