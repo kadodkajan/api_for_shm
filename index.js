@@ -347,12 +347,12 @@ let ProCat = mongoose.model("procate", procategorySchema);
 
 app.post("/addprocate", async (req, res) => {
   try {
-    const { procategoryName,productionTeam,packingTeam } = req.body;
+    const { procategoryName,productionTeam,packingTeam } = req.body.procategory;
 
     const existingcategory = await ProCat.findOne({ procategoryName });
 
     if (existingcategory) {
-     
+
       return res.status(400).json({
         status: "error",
         message: "Category already exists",
