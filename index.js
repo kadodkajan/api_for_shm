@@ -349,18 +349,16 @@ app.post("/addprocate", async (req, res) => {
   try {
     const { procategoryName,productionTeam,packingTeam } = req.body;
 
-    // Check if storeId already exists
     const existingcategory = await ProCat.findOne({ procategoryName });
 
     if (existingcategory) {
-      // Store with the provided storeId already exists
+     
       return res.status(400).json({
         status: "error",
         message: "Category already exists",
       });
     }
 
-    // Create a new store if storeId doesn't exist
     const newprocate = new ProCat({
       procategoryName,productionTeam,packingTeam
       
@@ -369,49 +367,46 @@ app.post("/addprocate", async (req, res) => {
     await newprocate.save();
 
     // Send a success response
-    res.json({ status: "success", message: "Team added successfully" });
+    res.json({ status: "success", message: "Product category added successfully" });
   } catch (error) {
     // Send an error response if an exception occurs
     res.status(500).json({ status: "error", message: "Internal Server Error" });
   }
 });
+// GET route to retrieve all stores
+app.get("/getAllProcat", async (req, res) => {
+  try {
+    // Use Mongoose to find all stores
+    const allProCate = await ProCat.find();
+
+    // Send the list of stores as a JSON response
+    res.json({ status: "success", procat: allProCate });
+  } catch (error) {
+    // Send an error response if an exception occurs
+    console.error("Error getting all catergory:", error);
+    res.status(500).json({ status: "error", message: "Internal Server Error" });
+  }
+});
 
 // DELETE route to remove a store by storeId
-// app.delete("/deleteTeam/:teamId", (req, res) => {
-//   const teamId = req.params.teamId;
+app.delete("/deleteprocate/:procatId", (req, res) => {
+  const procatId = req.params.procatId;
 
-//   // Use Mongoose to find and remove the store by storeId
-//   Team.findOneAndDelete({ _id:teamId })
-//     .then((deletedTeam) => {
-//       if (deletedTeam) {
-//         // Store found and deleted successfully
-//         res.json({ status: "success", message: "Team deleted successfully" });
-//       } else {
-//         // Store with the given storeId not found
-//         res.status(404).json({ status: "error", message: "Team not found" });
-//       }
-//     })
-//     .catch((error) => {
-//       res
-//         .status(500)
-//         .json({ status: "error", message: "Internal Server Error" });
-//     });
-// });
+  ProCat.findOneAndDelete({ _id:procatId })
+    .then((deletedProcat) => {
+      if (deletedProcat) {
+        res.json({ status: "success", message: "Product category deleted successfully" });
+      } else {
+        res.status(404).json({ status: "error", message: "Product category not found" });
+      }
+    })
+    .catch((error) => {
+      res
+        .status(500)
+        .json({ status: "error", message: "Internal Server Error" });
+    });
+});
 
-// // GET route to retrieve all stores
-// app.get("/getAllTeam", async (req, res) => {
-//   try {
-//     // Use Mongoose to find all stores
-//     const allTeam = await Team.find();
-
-//     // Send the list of stores as a JSON response
-//     res.json({ status: "success", team: allTeam });
-//   } catch (error) {
-//     // Send an error response if an exception occurs
-//     console.error("Error getting all Teams:", error);
-//     res.status(500).json({ status: "error", message: "Internal Server Error" });
-//   }
-// });
 
 
 
