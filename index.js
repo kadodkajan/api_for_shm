@@ -639,7 +639,6 @@ app.post("/addStoreGuide", async (req, res) => {
   try {
     const { guideName, products, availableDays, cutoffTime, user_location,_id } = req.body;
 const guideID=_id;
-    // Create a new store guide with the provided information
     const newStoreGuide = new StoreGuide({
       guideName,guideID,
       products,
