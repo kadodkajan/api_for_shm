@@ -513,7 +513,48 @@ app.delete("/deleteproduct/:productId", (req, res) => {
 });
 
 
+const guideSchema = new Schema({
+  guideName: String,
+  products: [
+    {
+      ProductId: String,
+      productName: String,
+      procategory: String, // Assuming the category is stored as a string, adjust as needed
+    }
+  ],
+  availableDays: [String],
+  cutoffTime: {
+    hours: String,
+    minutes: Number,
+    period: String,
+  },
+});
+//Guide
+const Guide = mongoose.model('Guide', guideSchema);
 
+app.post("/addguide", async (req, res) => {
+  try {
+    const { guideName, products, availableDays, cutoffTime } = req.body;
+
+    // Create a new guide with the provided information
+    const newGuide = new Guide({
+      guideName,
+      products,
+      availableDays,
+      cutoffTime,
+    });
+
+    // Save the new guide to the database
+    await newGuide.save();
+
+    // Send a success response
+    res.json({ status: "success", message: "Guide added successfully", guide: newGuide });
+  } catch (error) {
+    // Send an error response if an exception occurs
+    console.error(error);
+    res.status(500).json({ status: "error", message: "Internal Server Error" });
+  }
+});
 
 
 mongoose
