@@ -475,14 +475,22 @@ app.get("/getProductbycate/:catId", async (req, res) => {
     const catId = req.params.catId;
     const products = await Product.find({"procategory._id": catId});
 
-    // Send the list of stores as a JSON response
-    res.json({ status: "success", product: products });
+    // Transform each product object to the desired format
+    const transformedProducts = products.map(product => ({
+      ProductId: product.ProductId,
+      productName: product.productName,
+      procategoryName: product.procategory.procategoryName
+    }));
+
+    // Send the transformed list of products as a JSON response
+    res.json({ status: "success", products: transformedProducts });
   } catch (error) {
     // Send an error response if an exception occurs
-    console.error("Error getting all catergory:", error);
+    console.error("Error getting products by category:", error);
     res.status(500).json({ status: "error", message: "Internal Server Error" });
   }
 });
+
 
 // DELETE route to remove 
 app.delete("/deleteproduct/:productId", (req, res) => {
