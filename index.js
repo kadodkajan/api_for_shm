@@ -667,10 +667,9 @@ app.get("/getAllStoreGuides/:user_location", async (req, res) => {
 
     // Use Mongoose to find all store guides with the specified user_location
     const allStoreGuides = await StoreGuide.find({ user_location });
-
-    const transformedStoreGuides = allStoreGuides.map(storeGuide => ({
+  const transformedStoreGuides = allStoreGuides.map(storeGuide => ({
       _id: storeGuide._id,
-      storeGuideName: storeGuide.storeGuideName,
+      storeGuideName: storeGuide.guideName,
     }));
 
     // Send the list of store guides as a JSON response
