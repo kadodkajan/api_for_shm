@@ -477,6 +477,7 @@ app.get("/getProductbycate/:catId", async (req, res) => {
 
     // Transform each product object to the desired format
     const transformedProducts = products.map(product => ({
+      _id:product._id,
       ProductId: product.ProductId,
       productName: product.productName,
       procategoryName: product.procategory.procategoryName
