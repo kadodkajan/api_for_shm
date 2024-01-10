@@ -661,14 +661,18 @@ const guideID=_id;
 });
 
 // Get all store guides
-app.get("/getAllStoreGuides", async (req, res) => {
+app.get("/getAllStoreGuides/:user_location", async (req, res) => {
   try {
-    // Use Mongoose to find all store guides
-    const allStoreGuides = await StoreGuide.find();
+    const { user_location } = req.params;
+
+    // Use Mongoose to find all store guides with the specified user_location
+    const allStoreGuides = await StoreGuide.find({ user_location });
+
     const transformedStoreGuides = allStoreGuides.map(storeGuide => ({
       _id: storeGuide._id,
       storeGuideName: storeGuide.storeGuideName,
     }));
+
     // Send the list of store guides as a JSON response
     res.json({ status: "success", storeGuides: transformedStoreGuides });
   } catch (error) {
