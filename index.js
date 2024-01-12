@@ -777,7 +777,7 @@ app.post('/createOrder', async (req, res) => {
 });
 
 
-app.get('/getOrders', async (req, res) => {
+app.post('/getOrders', async (req, res) => {
   try {
     const { storeID, date } = req.body;
 
