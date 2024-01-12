@@ -480,7 +480,7 @@ app.get("/getProductbycate/:catId", async (req, res) => {
       _id:product._id,
       ProductId: product.ProductId,
       productName: product.productName,
-      procategoryName: product.procategory.procategoryName
+      procategory: product.procategory
     }));
 
     // Send the transformed list of products as a JSON response
@@ -519,7 +519,9 @@ const guideSchema = new Schema({
     {
       ProductId: String,
       productName: String,
-      procategory: String, // Assuming the category is stored as a string, adjust as needed
+      procategory: {procategoryName: String,
+        productionTeam: String,
+        packingTeam:String}, // Assuming the category is stored as a string, adjust as needed
     }
   ],
   availableDays: [String],
@@ -735,7 +737,8 @@ const orderSchema = new mongoose.Schema({
   orderOwner: String,
   products: [
     {
-      productId: String,
+      ProductId:String,
+      productName: String,
       productQuantity: Number,
       lastupdate: Date,
       lastupdate: {
