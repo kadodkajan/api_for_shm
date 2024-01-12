@@ -787,13 +787,13 @@ app.get('/getOrders', async (req, res) => {
 
     // Assuming date is in the format YYYY-MM-DD
     const allorders = await Order.find({
-      'orderdate.date': date,
+      'orderDate': date,
       'orderLocation': storeID,
     });
     const orders = allorders.map(order => ({
       _id:order._id,
       guideName: order.guideName,
-      orderdate:order.orderdate,
+      orderdate:order.orderDate,
       orderOwner:order.orderOwner,
 
      
