@@ -720,6 +720,146 @@ app.delete("/deleteStoreGuideById/:id", async (req, res) => {
   }
 });
 
+
+const orderSchema = new mongoose.Schema({
+  guideID: String,
+  guideName: String,
+  orderLocation: String,
+  orderdate: {
+    day: String,
+    date: String,
+    time: String,
+  },
+  orderOwner: String,
+  products: [
+    {
+      productId: String,
+      productQuantity: Number,
+      lastupdate: Date,
+      lastupdate: {
+        updatedBy: String,
+        updateDate: {
+          date: String,
+          time: String,
+        },
+      },
+    }
+  ],
+});
+
+const Order = mongoose.model('Order', orderSchema);
+
+
+app.post('/createOrder', async (req, res) => {
+  try {
+    const { guideID, orderLocation, orderdate, orderOwner, products,guideName } = req.body;
+
+    const newOrder = new Order({
+      guideID,
+      guideName,
+      orderLocation,
+      orderdate,
+      orderOwner,
+      products,
+    });
+
+    await newOrder.save();
+
+    res.json({ status: 'success', message: 'Order created successfully', order: newOrder });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: 'error', message: 'Internal Server Error' });
+  }
+});
+
+
+app.get('/getOrders', async (req, res) => {
+  try {
+    const { storeID, date } = req.body;
+
+    if (!storeID || !date) {
+      return res.status(400).json({ status: 'error', message: 'Missing storeID or date parameter' });
+    }
+
+    // Assuming date is in the format YYYY-MM-DD
+    const orders = await Order.find({
+      'orderdate.date': date,
+      'orderLocation': storeID,
+    });
+    const transformedOrders = orders.map(order => ({
+      _id:order._id,
+      guideName: order.guideName,
+      orderdate:order.orderdate,
+      orderOwner:order.orderOwner,
+
+     
+    }));
+    res.json({ status: 'success', transformedOrders });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: 'error', message: 'Internal Server Error' });
+  }
+});
+
+// Get order by ID
+app.get("/getOrderById/:id", async (req, res) => {
+  try {
+    // Use Mongoose to find the order by ID
+    const order = await Order.findById(req.params.id);
+
+    // Check if the order with the provided ID exists
+    if (!order) {
+      return res.status(404).json({ status: "error", message: "Order not found" });
+    }
+
+    // Send the order as a JSON response
+    res.json({ status: "success", order });
+  } catch (error) {
+    // Send an error response if an exception occurs
+    console.error("Error getting order by ID:", error);
+    res.status(500).json({ status: "error", message: "Internal Server Error" });
+  }
+});
+
+// Delete order by ID
+app.delete("/deleteOrderById/:id", async (req, res) => {
+  try {
+    // Use Mongoose to find and remove the order by ID
+    const deletedOrder = await Order.findByIdAndDelete(req.params.id);
+
+    // Check if the order with the provided ID exists
+    if (!deletedOrder) {
+      return res.status(404).json({ status: "error", message: "Order not found" });
+    }
+
+    // Send a success response with the deleted order
+    res.json({ status: "success", message: "Order deleted successfully" });
+  } catch (error) {
+    // Send an error response if an exception occurs
+    console.error("Error deleting order by ID:", error);
+    res.status(500).json({ status: "error", message: "Internal Server Error" });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 mongoose
   .connect(DB)
   .then(() => {
