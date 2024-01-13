@@ -783,7 +783,9 @@ app.post('/createOrder', async (req, res) => {
 app.post('/getOrders', async (req, res) => {
   try {
     const { storeID, date } = req.body;
+    console.log(date)
 
+    console.log(storeID)
     if (!storeID || !date) {
       return res.status(400).json({ status: 'error', message: 'Missing storeID or date parameter' });
     }
@@ -912,6 +914,7 @@ app.post('/getFutureOrderDates', async (req, res) => {
     // Find orders with guideID, orderLocation, and dates greater than or equal to today
     const futureOrderDates = await Order.find({
       'guideID': guideID,
+      orderLocation:orderLocation,
       'orderDate': { $gte: formattedCurrentDate },
     }).distinct('orderDate'); // Get distinct date values
 
