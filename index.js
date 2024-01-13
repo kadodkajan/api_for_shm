@@ -223,7 +223,19 @@ app.get("/getAllStores", async (req, res) => {
     res.status(500).json({ status: "error", message: "Internal Server Error" });
   }
 });
+app.get("/getAllStoresOnly", async (req, res) => {
+  try {
+    // Use Mongoose to find all stores
+    const allStores = await Store.find({ storeId: { $ne: 0 } });
 
+    // Send the list of stores as a JSON response
+    res.json({ status: "success", stores: allStores });
+  } catch (error) {
+    // Send an error response if an exception occurs
+    console.error("Error getting all stores:", error);
+    res.status(500).json({ status: "error", message: "Internal Server Error" });
+  }
+});
 //user login
 
 app.post("/login", async (req, res) => {
@@ -783,9 +795,7 @@ app.post('/createOrder', async (req, res) => {
 app.post('/getOrders', async (req, res) => {
   try {
     const { storeID, date } = req.body;
-    console.log(date)
-
-    console.log(storeID)
+  
     if (!storeID || !date) {
       return res.status(400).json({ status: 'error', message: 'Missing storeID or date parameter' });
     }
@@ -809,7 +819,26 @@ app.post('/getOrders', async (req, res) => {
     res.status(500).json({ status: 'error', message: 'Internal Server Error' });
   }
 });
+app.post('/getOrdersForCommisary', async (req, res) => {
+  try {
+    const { storeID, date } = req.body;
+    
+    if (!storeID || !date) {
+      return res.status(400).json({ status: 'error', message: 'Missing storeID or date parameter' });
+    }
 
+    // Assuming date is in the format YYYY-MM-DD
+    const allorders = await Order.findOne({
+      'orderDate': date,
+      'orderLocation': storeID,
+    });
+   
+    res.json({ status: 'success', allorders });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: 'error', message: 'Internal Server Error' });
+  }
+});
 // Get order by ID
 app.get("/getOrderById/:id", async (req, res) => {
   try {
