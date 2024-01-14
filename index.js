@@ -819,26 +819,132 @@ app.post('/getOrders', async (req, res) => {
     res.status(500).json({ status: 'error', message: 'Internal Server Error' });
   }
 });
+
+class Orderclass {
+  constructor({
+    guideID,    
+    orderDate,
+    allproducts,
+    storeOrders = [],
+  }) {
+    this.guideID = guideID;
+    this.orderDate = orderDate;
+    this.allproducts = allproducts;
+    this.storeOrders = storeOrders.map((storeOrder) => new StoreOrderclass(storeOrder));
+
+
+  }
+  addStoreOrder(storeOrderData) {
+    const newStoreOrder = new StoreOrderclass(storeOrderData);
+    this.storeOrders.push(newStoreOrder);
+  }
+}
+
+class StoreOrderclass {
+  constructor({
+   storeId,
+    products,
+  }) {
+    this.storeId = storeId;
+        this.products = products.map((product) => new Product(product));
+  }
+}
+
+
+class Productclass {
+  constructor({
+    ProductId,
+    productQuantity,
+    lastupdate,
+  }) {
+    this.ProductId = ProductId;
+    this.productQuantity = productQuantity;
+    this.lastupdate = {
+      updatedBy: lastupdate.updatedBy,
+      updateDate: new UpdateDate(lastupdate.updateDate),
+    };
+  }
+}
+
+class UpdateDate {
+  constructor({ date, time }) {
+    this.date = date;
+    this.time = time;
+  }
+}
+
+
+
+
+
+
+
 app.post('/getOrdersForCommisary', async (req, res) => {
   try {
-    const { storeID, date } = req.body;
-    
-    if (!storeID || !date) {
-      return res.status(400).json({ status: 'error', message: 'Missing storeID or date parameter' });
+    const { guideID, date } = req.body;
+
+    if (!guideID || !date) {
+      return res.status(400).json({ status: 'error', message: 'Missing guideID or date parameter' });
     }
 
-    // Assuming date is in the format YYYY-MM-DD
-    const allorders = await Order.findOne({
-      'orderDate': date,
-      'orderLocation': storeID,
+    // Convert guideID to ObjectId
+
+    // Fetch all stores
+    const allStores = await Store.find({ storeId: { $ne: 0 } });
+
+    // Fetch orders for each store based on guideID, date, and allStores
+    const storeOrdersPromises = allStores.map(async (store) => {
+      const storeId = store.storeId; // Adjust the field name accordingly
+
+      // Fetch orders for the current store
+      const ordersForStore = await OrderModel.findOne({
+        guideID: guideID,
+        orderDate: date,
+        'products.storeId': storeId,
+      });
+
+      return {
+        storeId,
+        products: ordersForStore ? ordersForStore.products : [],
+      };
     });
-   
-    res.json({ status: 'success', allorders });
+
+    // Wait for all store orders to be fetched
+    const storeOrders = await Promise.all(storeOrdersPromises);
+
+    // Convert the result to StoreOrderclass instances
+    const storeOrderInstances = storeOrders.map((storeOrder) => new StoreOrderclass(storeOrder));
+
+    // You can use the fetched data to initialize the Orderclass
+    const orderData = {
+      guideID,
+      orderDate: date,
+      allproducts: [], // You can modify this based on your data structure
+      storeOrders: storeOrderInstances,
+    };
+
+    const orderInstance = new Orderclass(orderData);
+
+    // Use orderInstance to process or store the orders as needed
+    // You can also add more logic here based on your requirements
+
+    res.json({ status: 'success', message: 'Orders fetched successfully', data: orderInstance });
   } catch (error) {
     console.error(error);
     res.status(500).json({ status: 'error', message: 'Internal Server Error' });
   }
 });
+
+
+
+
+
+
+
+
+
+
+
 // Get order by ID
 app.get("/getOrderById/:id", async (req, res) => {
   try {
