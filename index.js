@@ -829,7 +829,7 @@ class Orderclass {
   }) {
     this.guideID = guideID;
     this.orderDate = orderDate;
-    this.allproducts = allproducts;
+    this.allproducts =  allproducts;
     this.storeOrders = storeOrders.map((storeOrder) => new StoreOrderclass(storeOrder));
 
 
@@ -842,11 +842,11 @@ class Orderclass {
 
 class StoreOrderclass {
   constructor({
-   storeId,
+    storeName,
     products,
   }) {
-    this.storeId = storeId;
-        this.products = products.map((product) => new Product(product));
+    this.storeName = storeName;
+        this.products = products.map((product) => new Productclass(product));
   }
 }
 
@@ -894,17 +894,17 @@ app.post('/getOrdersForCommisary', async (req, res) => {
 
     // Fetch orders for each store based on guideID, date, and allStores
     const storeOrdersPromises = allStores.map(async (store) => {
-      const storeId = store.storeId; // Adjust the field name accordingly
+      const storeName = store.storeName; // Adjust the field name accordingly
 
       // Fetch orders for the current store
-      const ordersForStore = await OrderModel.findOne({
+      const ordersForStore = await Order.findOne({
         guideID: guideID,
         orderDate: date,
-        'products.storeId': storeId,
+        'orderLocation': storeName,
       });
 
       return {
-        storeId,
+        storeName,
         products: ordersForStore ? ordersForStore.products : [],
       };
     });
@@ -915,11 +915,13 @@ app.post('/getOrdersForCommisary', async (req, res) => {
     // Convert the result to StoreOrderclass instances
     const storeOrderInstances = storeOrders.map((storeOrder) => new StoreOrderclass(storeOrder));
 
+
+    const allproducts =await Store.find({ storeId: { $ne: 0 } });
     // You can use the fetched data to initialize the Orderclass
     const orderData = {
       guideID,
       orderDate: date,
-      allproducts: [], // You can modify this based on your data structure
+      allproducts: allproducts, // You can modify this based on your data structure
       storeOrders: storeOrderInstances,
     };
 
