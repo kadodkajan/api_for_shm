@@ -1,10 +1,8 @@
-
-require('dotenv').config();
-
+require("dotenv").config();
 
 const express = require("express");
 const bodyParser = require("body-parser");
-const fs = require('fs');
+const fs = require("fs");
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -13,17 +11,16 @@ app.use(bodyParser.json());
 const mongoose = require("mongoose");
 let Schema = mongoose.Schema;
 const HTTP_PORT = process.env.PORT || 8080;
-const DB = "mongodb+srv://kadodkajan:bVzNQ8UYwLFkhePC@cluster0.5tu5clo.mongodb.net/?retryWrites=true&w=majority"
+const DB =
+  "mongodb+srv://kadodkajan:bVzNQ8UYwLFkhePC@cluster0.5tu5clo.mongodb.net/?retryWrites=true&w=majority";
 
 const cors = require("cors");
-const net = require('net');
+const net = require("net");
 let dynamicPort = HTTP_PORT;
 
 app.use(cors());
 
 //products
-
-
 
 const userSchema = new Schema({
   user_name: String,
@@ -106,8 +103,6 @@ app.get("/getAllUsers", (req, res) => {
     });
 });
 
-
-
 app.put("/updateAuth/:userId", async (req, res) => {
   try {
     const { user_auth } = req.body;
@@ -146,7 +141,6 @@ app.put("/updateAuth/:userId", async (req, res) => {
     res.status(500).json({ status: "error", message: "Internal Server Error" });
   }
 });
-
 
 //Store
 const storeSchema = new Schema({
@@ -268,11 +262,9 @@ app.post("/login", async (req, res) => {
   }
 });
 
-
 //Teams
 const teamSchema = new Schema({
-  teamName: String
-  
+  teamName: String,
 });
 
 let Team = mongoose.model("team", teamSchema);
@@ -294,8 +286,7 @@ app.post("/addTeam", async (req, res) => {
 
     // Create a new store if storeId doesn't exist
     const newteam = new Team({
-      teamName
-      
+      teamName,
     });
 
     await newteam.save();
@@ -313,7 +304,7 @@ app.delete("/deleteTeam/:teamId", (req, res) => {
   const teamId = req.params.teamId;
 
   // Use Mongoose to find and remove the store by storeId
-  Team.findOneAndDelete({ _id:teamId })
+  Team.findOneAndDelete({ _id: teamId })
     .then((deletedTeam) => {
       if (deletedTeam) {
         // Store found and deleted successfully
@@ -345,40 +336,42 @@ app.get("/getAllTeam", async (req, res) => {
   }
 });
 
-
 // Product Catergory
 
 const procategorySchema = new Schema({
   procategoryName: String,
   productionTeam: String,
-  packingTeam:String
-  
+  packingTeam: String,
 });
 
 let ProCat = mongoose.model("procate", procategorySchema);
 
 app.post("/addprocate", async (req, res) => {
   try {
-    const { procategoryName,productionTeam,packingTeam } = req.body.procategory;
+    const { procategoryName, productionTeam, packingTeam } =
+      req.body.procategory;
 
     const existingcategory = await ProCat.findOne({ procategoryName });
 
     if (existingcategory) {
-
       return res.status(400).json({
         status: "error",
         message: "Category already exists",
       });
     }
     const newprocate = new ProCat({
-      procategoryName,productionTeam,packingTeam
-      
+      procategoryName,
+      productionTeam,
+      packingTeam,
     });
 
     await newprocate.save();
 
     // Send a success response
-    res.json({ status: "success", message: "Product category added successfully" });
+    res.json({
+      status: "success",
+      message: "Product category added successfully",
+    });
   } catch (error) {
     // Send an error response if an exception occurs
     res.status(500).json({ status: "error", message: "Internal Server Error" });
@@ -403,12 +396,17 @@ app.get("/getAllProcat", async (req, res) => {
 app.delete("/deleteprocate/:procatId", (req, res) => {
   const procatId = req.params.procatId;
 
-  ProCat.findOneAndDelete({ _id:procatId })
+  ProCat.findOneAndDelete({ _id: procatId })
     .then((deletedProcat) => {
       if (deletedProcat) {
-        res.json({ status: "success", message: "Product category deleted successfully" });
+        res.json({
+          status: "success",
+          message: "Product category deleted successfully",
+        });
       } else {
-        res.status(404).json({ status: "error", message: "Product category not found" });
+        res
+          .status(404)
+          .json({ status: "error", message: "Product category not found" });
       }
     })
     .catch((error) => {
@@ -418,24 +416,21 @@ app.delete("/deleteprocate/:procatId", (req, res) => {
     });
 });
 
-
-
 //Product
 const productSchema = new Schema({
   ProductId: String,
   productName: String,
-  procategory: procategorySchema  // Embedding procategorySchema as a subdocument
+  procategory: procategorySchema, // Embedding procategorySchema as a subdocument
 });
 
-const Product = mongoose.model('Product', productSchema);
-
+const Product = mongoose.model("Product", productSchema);
 
 app.post("/addproduct", async (req, res) => {
   try {
     const { ProductId, productName, procategory } = req.body;
 
     // Check if the product category already exists
-    const existingCategory = await ProCat.findById(procategory);;
+    const existingCategory = await ProCat.findById(procategory);
 
     if (!existingCategory) {
       // If the category does not exist, create a new one
@@ -455,7 +450,7 @@ app.post("/addproduct", async (req, res) => {
     const newProduct = new Product({
       ProductId,
       productName,
-      procategory: existingCategory  // Assign the procategory information to the product
+      procategory: existingCategory, // Assign the procategory information to the product
     });
 
     await newProduct.save();
@@ -485,14 +480,14 @@ app.get("/getAllProduct", async (req, res) => {
 app.get("/getProductbycate/:catId", async (req, res) => {
   try {
     const catId = req.params.catId;
-    const products = await Product.find({"procategory._id": catId});
+    const products = await Product.find({ "procategory._id": catId });
 
     // Transform each product object to the desired format
-    const transformedProducts = products.map(product => ({
-      _id:product._id,
+    const transformedProducts = products.map((product) => ({
+      _id: product._id,
       ProductId: product.ProductId,
       productName: product.productName,
-      procategory: product.procategory
+      procategory: product.procategory,
     }));
 
     // Send the transformed list of products as a JSON response
@@ -504,17 +499,21 @@ app.get("/getProductbycate/:catId", async (req, res) => {
   }
 });
 
-
-// DELETE route to remove 
+// DELETE route to remove
 app.delete("/deleteproduct/:productId", (req, res) => {
   const productId = req.params.productId;
 
-  Product.findOneAndDelete({ _id:productId })
+  Product.findOneAndDelete({ _id: productId })
     .then((deletedPro) => {
       if (deletedPro) {
-        res.json({ status: "success", message: "Product  deleted successfully" });
+        res.json({
+          status: "success",
+          message: "Product  deleted successfully",
+        });
       } else {
-        res.status(404).json({ status: "error", message: "Product  not found" });
+        res
+          .status(404)
+          .json({ status: "error", message: "Product  not found" });
       }
     })
     .catch((error) => {
@@ -524,32 +523,29 @@ app.delete("/deleteproduct/:productId", (req, res) => {
     });
 });
 
-
 const guideSchema = new Schema({
   guideName: String,
   products: [
     {
       ProductId: String,
       productName: String,
-      procategory: {procategoryName: String,
+      procategory: {
+        procategoryName: String,
         productionTeam: String,
-        packingTeam:String}, // Assuming the category is stored as a string, adjust as needed
-    }
+        packingTeam: String,
+      }, // Assuming the category is stored as a string, adjust as needed
+    },
   ],
   availableDays: [String],
-  cutoffTime: {
-    hours: String,
-    minutes: Number,
-    period: String,
-  },
-});
+  cutoffTime: Number}
+  
+);
 //Guide
-const Guide = mongoose.model('Guide', guideSchema);
+const Guide = mongoose.model("Guide", guideSchema);
 
 app.post("/addguide", async (req, res) => {
   try {
     const { guideName, products, availableDays, cutoffTime } = req.body;
-
     // Create a new guide with the provided information
     const newGuide = new Guide({
       guideName,
@@ -562,7 +558,11 @@ app.post("/addguide", async (req, res) => {
     await newGuide.save();
 
     // Send a success response
-    res.json({ status: "success", message: "Guide added successfully", guide: newGuide });
+    res.json({
+      status: "success",
+      message: "Guide added successfully",
+      guide: newGuide,
+    });
   } catch (error) {
     // Send an error response if an exception occurs
     console.error(error);
@@ -573,10 +573,9 @@ app.get("/getAllGuide", async (req, res) => {
   try {
     // Use Mongoose to find all stores
     const allGuide = await Guide.find();
-    const transformedGuides = allGuide.map(guide => ({
-      _id:guide._id,
+    const transformedGuides = allGuide.map((guide) => ({
+      _id: guide._id,
       guideName: guide.guideName,
-     
     }));
     // Send the list of stores as a JSON response
     res.json({ status: "success", guide: transformedGuides });
@@ -594,7 +593,9 @@ app.get("/getGuideById/:id", async (req, res) => {
 
     // Check if the guide with the provided ID exists
     if (!guide) {
-      return res.status(404).json({ status: "error", message: "Guide not found" });
+      return res
+        .status(404)
+        .json({ status: "error", message: "Guide not found" });
     }
 
     // Send the guide as a JSON response
@@ -614,7 +615,9 @@ app.delete("/deleteGuideById/:id", async (req, res) => {
 
     // Check if the guide with the provided ID exists
     if (!deletedGuide) {
-      return res.status(404).json({ status: "error", message: "Guide not found" });
+      return res
+        .status(404)
+        .json({ status: "error", message: "Guide not found" });
     }
 
     // Send a success response with the deleted guide
@@ -629,32 +632,36 @@ app.delete("/deleteGuideById/:id", async (req, res) => {
 //storeGuideName
 const storeGuideSchema = new Schema({
   guideName: String,
-  guideID:String,
+  guideID: String,
   products: [
     {
       ProductId: String,
       productName: String,
       productPar: Number,
-    }
+    },
   ],
   availableDays: [String],
-  cutoffTime: {
-    hours: String,
-    minutes: Number,
-    period: String,
-  },
+  cutoffTime: Number,
   user_location: String,
 });
 
-const StoreGuide = mongoose.model('StoreGuide', storeGuideSchema);
+const StoreGuide = mongoose.model("StoreGuide", storeGuideSchema);
 
 // Add store guide
 app.post("/addStoreGuide", async (req, res) => {
   try {
-    const { guideName, products, availableDays, cutoffTime, user_location,_id } = req.body;
-const guideID=_id;
+    const {
+      guideName,
+      products,
+      availableDays,
+      cutoffTime,
+      user_location,
+      _id,
+    } = req.body;
+    const guideID = _id;
     const newStoreGuide = new StoreGuide({
-      guideName,guideID,
+      guideName,
+      guideID,
       products,
       availableDays,
       cutoffTime,
@@ -665,7 +672,11 @@ const guideID=_id;
     await newStoreGuide.save();
 
     // Send a success response
-    res.json({ status: "success", message: "Store guide added successfully", storeGuide: newStoreGuide });
+    res.json({
+      status: "success",
+      message: "Store guide added successfully",
+      storeGuide: newStoreGuide,
+    });
   } catch (error) {
     // Send an error response if an exception occurs
     console.error(error);
@@ -680,7 +691,7 @@ app.get("/getAllStoreGuides/:user_location", async (req, res) => {
 
     // Use Mongoose to find all store guides with the specified user_location
     const allStoreGuides = await StoreGuide.find({ user_location });
-  const transformedStoreGuides = allStoreGuides.map(storeGuide => ({
+    const transformedStoreGuides = allStoreGuides.map((storeGuide) => ({
       _id: storeGuide._id,
       storeGuideName: storeGuide.guideName,
     }));
@@ -702,7 +713,9 @@ app.get("/getStoreGuideById/:id", async (req, res) => {
 
     // Check if the store guide with the provided ID exists
     if (!storeGuide) {
-      return res.status(404).json({ status: "error", message: "Store guide not found" });
+      return res
+        .status(404)
+        .json({ status: "error", message: "Store guide not found" });
     }
 
     // Send the store guide as a JSON response
@@ -722,18 +735,22 @@ app.delete("/deleteStoreGuideById/:id", async (req, res) => {
 
     // Check if the store guide with the provided ID exists
     if (!deletedStoreGuide) {
-      return res.status(404).json({ status: "error", message: "Store guide not found" });
+      return res
+        .status(404)
+        .json({ status: "error", message: "Store guide not found" });
     }
 
     // Send a success response with the deleted store guide
-    res.json({ status: "success", message: "Store guide deleted successfully" });
+    res.json({
+      status: "success",
+      message: "Store guide deleted successfully",
+    });
   } catch (error) {
     // Send an error response if an exception occurs
     console.error("Error deleting store guide by ID:", error);
     res.status(500).json({ status: "error", message: "Internal Server Error" });
   }
 });
-
 
 const orderSchema = new mongoose.Schema({
   guideID: String,
@@ -745,11 +762,11 @@ const orderSchema = new mongoose.Schema({
     date: String,
     time: String,
   },
-  
+
   orderOwner: String,
   products: [
     {
-      ProductId:String,
+      ProductId: String,
       productName: String,
       productQuantity: Number,
       lastupdate: Date,
@@ -760,18 +777,25 @@ const orderSchema = new mongoose.Schema({
           time: String,
         },
       },
-    }
+    },
   ],
 });
 
-const Order = mongoose.model('Order', orderSchema);
+const Order = mongoose.model("Order", orderSchema);
 
-
-app.post('/createOrder', async (req, res) => {
+app.post("/createOrder", async (req, res) => {
   try {
-    const { guideID, orderLocation, orderdate,submissionDate, orderOwner, products,guideName } = req.body;
-    const orderDate =orderdate;
-   
+    const {
+      guideID,
+      orderLocation,
+      orderdate,
+      submissionDate,
+      orderOwner,
+      products,
+      guideName,
+    } = req.body;
+    const orderDate = orderdate;
+
     const newOrder = new Order({
       guideID,
       guideName,
@@ -784,167 +808,45 @@ app.post('/createOrder', async (req, res) => {
 
     await newOrder.save();
 
-    res.json({ status: 'success', message: 'Order created successfully', order: newOrder });
+    res.json({
+      status: "success",
+      message: "Order created successfully",
+      order: newOrder,
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ status: 'error', message: 'Internal Server Error' });
+    res.status(500).json({ status: "error", message: "Internal Server Error" });
   }
 });
 
-
-app.post('/getOrders', async (req, res) => {
+app.post("/getOrders", async (req, res) => {
   try {
     const { storeID, date } = req.body;
-  
+
     if (!storeID || !date) {
-      return res.status(400).json({ status: 'error', message: 'Missing storeID or date parameter' });
+      return res.status(400).json({
+        status: "error",
+        message: "Missing storeID or date parameter",
+      });
     }
 
     // Assuming date is in the format YYYY-MM-DD
     const allorders = await Order.find({
-      'orderDate': date,
-      'orderLocation': storeID,
-    });
-    const orders = allorders.map(order => ({
-      _id:order._id,
-      guideName: order.guideName,
-      orderdate:order.orderDate,
-      orderOwner:order.orderOwner,
-
-     
-    }));
-    res.json({ status: 'success', orders });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ status: 'error', message: 'Internal Server Error' });
-  }
-});
-
-class Orderclass {
-  constructor({
-    guideID,    
-    orderDate,
-    allproducts,
-    storeOrders = [],
-  }) {
-    this.guideID = guideID;
-    this.orderDate = orderDate;
-    this.allproducts =  allproducts;
-    this.storeOrders = storeOrders.map((storeOrder) => new StoreOrderclass(storeOrder));
-
-
-  }
-  addStoreOrder(storeOrderData) {
-    const newStoreOrder = new StoreOrderclass(storeOrderData);
-    this.storeOrders.push(newStoreOrder);
-  }
-}
-
-class StoreOrderclass {
-  constructor({
-    storeName,
-    products,
-  }) {
-    this.storeName = storeName;
-        this.products = products.map((product) => new Productclass(product));
-  }
-}
-
-
-class Productclass {
-  constructor({
-    ProductId,
-    productQuantity,
-    lastupdate,
-  }) {
-    this.ProductId = ProductId;
-    this.productQuantity = productQuantity;
-    this.lastupdate = {
-      updatedBy: lastupdate.updatedBy,
-      updateDate: new UpdateDate(lastupdate.updateDate),
-    };
-  }
-}
-
-class UpdateDate {
-  constructor({ date, time }) {
-    this.date = date;
-    this.time = time;
-  }
-}
-
-
-
-
-
-
-
-app.post('/getOrdersForCommisary', async (req, res) => {
-  try {
-    const { guideID, date } = req.body;
-
-    if (!guideID || !date) {
-      return res.status(400).json({ status: 'error', message: 'Missing guideID or date parameter' });
-    }
-
-    // Convert guideID to ObjectId
-
-    // Fetch all stores
-    const allStores = await Store.find({ storeId: { $ne: 0 } });
-
-    // Fetch orders for each store based on guideID, date, and allStores
-    const storeOrdersPromises = allStores.map(async (store) => {
-      const storeName = store.storeName; // Adjust the field name accordingly
-
-      // Fetch orders for the current store
-      const ordersForStore = await Order.findOne({
-        guideID: guideID,
-        orderDate: date,
-        'orderLocation': storeName,
-      });
-
-      return {
-        storeName,
-        products: ordersForStore ? ordersForStore.products : [],
-      };
-    });
-
-    // Wait for all store orders to be fetched
-    const storeOrders = await Promise.all(storeOrdersPromises);
-
-    // Convert the result to StoreOrderclass instances
-    const storeOrderInstances = storeOrders.map((storeOrder) => new StoreOrderclass(storeOrder));
-
-
-    const allproducts =await Store.find({ storeId: { $ne: 0 } });
-    // You can use the fetched data to initialize the Orderclass
-    const orderData = {
-      guideID,
       orderDate: date,
-      allproducts: allproducts, // You can modify this based on your data structure
-      storeOrders: storeOrderInstances,
-    };
-
-    const orderInstance = new Orderclass(orderData);
-
-    // Use orderInstance to process or store the orders as needed
-    // You can also add more logic here based on your requirements
-
-    res.json({ status: 'success', message: 'Orders fetched successfully', data: orderInstance });
+      orderLocation: storeID,
+    });
+    const orders = allorders.map((order) => ({
+      _id: order._id,
+      guideName: order.guideName,
+      orderdate: order.orderDate,
+      orderOwner: order.orderOwner,
+    }));
+    res.json({ status: "success", orders });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ status: 'error', message: 'Internal Server Error' });
+    res.status(500).json({ status: "error", message: "Internal Server Error" });
   }
 });
-
-
-
-
-
-
-
-
-
 
 
 // Get order by ID
@@ -955,7 +857,9 @@ app.get("/getOrderById/:id", async (req, res) => {
 
     // Check if the order with the provided ID exists
     if (!order) {
-      return res.status(404).json({ status: "error", message: "Order not found" });
+      return res
+        .status(404)
+        .json({ status: "error", message: "Order not found" });
     }
 
     // Send the order as a JSON response
@@ -975,7 +879,9 @@ app.delete("/deleteOrderById/:id", async (req, res) => {
 
     // Check if the order with the provided ID exists
     if (!deletedOrder) {
-      return res.status(404).json({ status: "error", message: "Order not found" });
+      return res
+        .status(404)
+        .json({ status: "error", message: "Order not found" });
     }
 
     // Send a success response with the deleted order
@@ -987,7 +893,6 @@ app.delete("/deleteOrderById/:id", async (req, res) => {
   }
 });
 
-
 // Update order by ID
 app.put("/updateOrderById/:id", async (req, res) => {
   try {
@@ -995,7 +900,9 @@ app.put("/updateOrderById/:id", async (req, res) => {
 
     // Validate required fields
     if (!_id || !products || !updatedate || !updateby) {
-      return res.status(400).json({ status: "error", message: "Missing required parameters" });
+      return res
+        .status(400)
+        .json({ status: "error", message: "Missing required parameters" });
     }
 
     // Use Mongoose to find the order by ID
@@ -1003,14 +910,21 @@ app.put("/updateOrderById/:id", async (req, res) => {
 
     // Check if the order with the provided ID exists
     if (!order) {
-      return res.status(404).json({ status: "error", message: "Order not found" });
+      return res
+        .status(404)
+        .json({ status: "error", message: "Order not found" });
     }
 
     // Update each product in the order's products array
     order.products.forEach((existingProduct) => {
-      const updatedProduct = products.find((newProduct) => newProduct.productId === existingProduct.productId);
+      const updatedProduct = products.find(
+        (newProduct) => newProduct.productId === existingProduct.productId
+      );
 
-      if (updatedProduct && updatedProduct.productQuantity !== existingProduct.productQuantity) {
+      if (
+        updatedProduct &&
+        updatedProduct.productQuantity !== existingProduct.productQuantity
+      ) {
         // Update only if the quantities are different
         existingProduct.productQuantity = updatedProduct.productQuantity;
         existingProduct.lastupdate = {
@@ -1024,7 +938,11 @@ app.put("/updateOrderById/:id", async (req, res) => {
     await order.save();
 
     // Send a success response with the updated order
-    res.json({ status: "success", message: "Order updated successfully", order });
+    res.json({
+      status: "success",
+      message: "Order updated successfully",
+      order,
+    });
   } catch (error) {
     // Send an error response if an exception occurs
     console.error("Error updating order by ID:", error);
@@ -1032,13 +950,14 @@ app.put("/updateOrderById/:id", async (req, res) => {
   }
 });
 
-
-app.post('/getFutureOrderDates', async (req, res) => {
+app.post("/getFutureOrderDates", async (req, res) => {
   try {
     const { guideID, orderLocation } = req.body;
 
     if (!guideID || !orderLocation) {
-      return res.status(400).json({ status: 'error', message: 'Missing required parameters' });
+      return res
+        .status(400)
+        .json({ status: "error", message: "Missing required parameters" });
     }
 
     const currentDate = new Date();
@@ -1050,27 +969,213 @@ app.post('/getFutureOrderDates', async (req, res) => {
 
     // Find orders with guideID, orderLocation, and dates greater than or equal to today
     const futureOrderDates = await Order.find({
-      'guideID': guideID,
-      orderLocation:orderLocation,
-      'orderDate': { $gte: formattedCurrentDate },
-    }).distinct('orderDate'); // Get distinct date values
+      guideID: guideID,
+      orderLocation: orderLocation,
+      orderDate: { $gte: formattedCurrentDate },
+    }).distinct("orderDate"); // Get distinct date values
 
-    res.json({ status: 'success', futureOrderDates });
+    res.json({ status: "success", futureOrderDates });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ status: 'error', message: 'Internal Server Error' });
+    res.status(500).json({ status: "error", message: "Internal Server Error" });
   }
 });
 
 
 
+class Orderclass {
+  constructor({ guideID, orderDate, allproducts, storeOrders = [] }) {
+    this.guideID = guideID;
+    this.orderDate = orderDate;
+    this.allproducts = allproducts;
+    this.storeOrders = storeOrders.map(
+      (storeOrder) => new StoreOrderclass(storeOrder)
+    );
+  }
+  addStoreOrder(storeOrderData) {
+    const newStoreOrder = new StoreOrderclass(storeOrderData);
+    this.storeOrders.push(newStoreOrder);
+  }
+}
+
+class StoreOrderclass {
+  constructor({ storeName, products, orderOwner }) {
+    this.storeName = storeName;
+    this.orderOwner = orderOwner;
+    this.products = this.mapProducts(products);
+  }
+
+  mapProducts(products) {
+    // Check if products array is empty before applying map
+    return products.length
+      ? products.map((product) => new Productclass(product))
+      : this.getDefaultProducts(); // Call a method to get default products
+  }
+
+  getDefaultProducts() {
+    // You can customize this method to return default products or perform other actions
+    return [
+      new Productclass({
+        ProductId: "defaultId",
+        productName: "Default Product",
+        productQuantity: 0,
+        lastupdate: {
+          updatedBy: "Admin",
+          updateDate: new UpdateDate({ date: "2024-01-15", time: "12:00 PM" }),
+        },
+      }),
+    ];
+  }
+}
+
+class Productclass {
+  constructor({ ProductId, productQuantity, lastupdate }) {
+    this.ProductId = ProductId;
+    this.productQuantity = productQuantity;
+    this.lastupdate = {
+      updatedBy: lastupdate.updatedBy,
+      updateDate: new UpdateDate(lastupdate.updateDate),
+    };
+  }
+}
+
+class UpdateDate {
+  constructor({ date, time }) {
+    this.date = date;
+    this.time = time;
+  }
+}
+
+app.post("/getOrdersForCommisary", async (req, res) => {
+  try {
+    const { guideID, date } = req.body;
+
+    console.log(guideID)
+    console.log(date)
+    if (!guideID || !date) {
+      return res.status(400).json({
+        status: "error",
+        message: "Missing guideID or date parameter",
+      });
+    }
+    const commisaryguide = await Guide.findOne({
+      _id: guideID,
+    });
+   const productsForOrder = commisaryguide.products.map((product) => ({
+      ProductId: product.ProductId,
+      productName: product.productName,
+      
+    }));
+    // Fetch all stores
+    const allStores = await Store.find({ storeId: { $ne: 0 } });
+
+    // Fetch orders for each store based on guideID, date, and allStores
+    const storeOrdersPromises = allStores.map(async (store) => {
+      const storeName = store.storeName; // Adjust the field name accordingly
+
+      // Fetch orders for the current store
+      var ordersForStore = await Order.findOne({
+        guideID: guideID,
+        orderDate: date,
+        orderLocation: storeName,
+      });
+      if (!ordersForStore) {
+        const storeguide = await StoreGuide.findOne({
+          guideID: guideID,
+          user_location: storeName,
+        });
+
+        var productsWithQuantity = [];
+        var guideName = "System generated";
 
 
+        if (!storeguide) {
+          
+          guideName = commisaryguide.guideName
+          productsWithQuantity = commisaryguide.products.map((product) => ({
+            ProductId: product.ProductId,
+            productName: product.productName,
+            productQuantity: 0,
+            _id: product._id,
+          }));
+        } else {
+          // const productsfororder =storeguide.products;
+          guideName = storeguide.guideName;
+          productsWithQuantity = storeguide.products.map((product) => ({
+            ProductId: product.ProductId,
+            productName: product.productName,
+            productQuantity: Math.floor(product.productPar / 2),
+            _id: product._id,
+          }));
+        }
+        const currentDate = new Date();
 
+        const submissionDate = {
+          day: getDayOfWeek(currentDate),
+          date: currentDate.toLocaleDateString('en-US'),
+          time: currentDate.toLocaleTimeString('en-US'),
+        };
+        
+        
+        // Function to get the day of the week (Sunday, Monday, etc.)
+        function getDayOfWeek(date) {
+          const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+          return daysOfWeek[date.getDay()];
+        }
+        const newOrder = new Order({
+          guideID: guideID,
+          guideName: guideName,
+          orderLocation: storeName,
+          orderDate: date,
+          submissionDate: submissionDate,
+          orderOwner: "System",
+          products: productsWithQuantity,
+        });
+        await newOrder.save();
+        ordersForStore = await Order.findOne({
+          guideID: guideID,
+          orderDate: date,
+          orderLocation: storeName,
+        });
+      }
 
+      return {
+        storeName,
+        orderOwner: ordersForStore ? ordersForStore.orderOwner : "System", // or set a default value
+        products: ordersForStore ? ordersForStore.products : [],
+      };
+    });
+    // Wait for all store orders to be fetched
+    const storeOrders = await Promise.all(storeOrdersPromises);
 
+    // Convert the result to StoreOrderclass instances
+    const storeOrderInstances = storeOrders.map(
+      (storeOrder) => new StoreOrderclass(storeOrder)
+    );
 
+    // You can use the fetched data to initialize the Orderclass
+    const orderData = {
+      guideID,
+      orderDate: date,
+      allproducts: productsForOrder, // You can modify this based on your data structure
+      storeOrders: storeOrderInstances,
+    };
 
+    const orderInstance = new Orderclass(orderData);
+
+    // Use orderInstance to process or store the orders as needed
+    // You can also add more logic here based on your requirements
+
+    res.json({
+      status: "success",
+      message: "Orders fetched successfully",
+      data: orderInstance,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: "error", message: "Internal Server Error" });
+  }
+});
 
 
 mongoose
@@ -1085,6 +1190,6 @@ mongoose
   });
 
 // Start the server on an available port
-app.get('/', (req, res) => {
-  res.send('Hey this is my API running 🥳')
-})
+app.get("/", (req, res) => {
+  res.send("Hey this is my API running 🥳");
+});
