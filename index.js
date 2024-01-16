@@ -537,9 +537,8 @@ const guideSchema = new Schema({
     },
   ],
   availableDays: [String],
-  cutoffTime: Number}
-  
-);
+  cutoffTime: Number,
+});
 //Guide
 const Guide = mongoose.model("Guide", guideSchema);
 
@@ -848,7 +847,6 @@ app.post("/getOrders", async (req, res) => {
   }
 });
 
-
 // Get order by ID
 app.get("/getOrderById/:id", async (req, res) => {
   try {
@@ -981,8 +979,6 @@ app.post("/getFutureOrderDates", async (req, res) => {
   }
 });
 
-
-
 class Orderclass {
   constructor({ guideID, orderDate, allproducts, storeOrders = [] }) {
     this.guideID = guideID;
@@ -1018,24 +1014,26 @@ class StoreOrderclass {
       new Productclass({
         ProductId: "defaultId",
         productName: "Default Product",
-        productQuantity: 0,
-        lastupdate: {
-          updatedBy: "Admin",
-          updateDate: new UpdateDate({ date: "2024-01-15", time: "12:00 PM" }),
-        },
+        productQuantity: -1,
+        
       }),
     ];
   }
 }
 
 class Productclass {
-  constructor({ ProductId, productQuantity, lastupdate }) {
+  constructor({ ProductId, productQuantity, lastupdate = {} }) {
     this.ProductId = ProductId;
     this.productQuantity = productQuantity;
-    this.lastupdate = {
-      updatedBy: lastupdate.updatedBy,
-      updateDate: new UpdateDate(lastupdate.updateDate),
-    };
+    
+    if (lastupdate && lastupdate.updatedBy && lastupdate.updateDate) {
+      this.lastupdate = {
+        updatedBy: lastupdate.updatedBy,
+        updateDate: new UpdateDate(lastupdate.updateDate),
+      };
+    } else {
+      this.lastupdate = null; // or any other default value or behavior you want
+    }
   }
 }
 
@@ -1050,8 +1048,13 @@ app.post("/getOrdersForCommisary", async (req, res) => {
   try {
     const { guideID, date } = req.body;
 
-    console.log(guideID)
-    console.log(date)
+    var message = {
+      code: 1,
+      message: "all Stores has the orders",
+      noPlacedStores: [],
+      stores: [],
+      systemorder :[],
+    };
     if (!guideID || !date) {
       return res.status(400).json({
         status: "error",
@@ -1061,10 +1064,10 @@ app.post("/getOrdersForCommisary", async (req, res) => {
     const commisaryguide = await Guide.findOne({
       _id: guideID,
     });
-   const productsForOrder = commisaryguide.products.map((product) => ({
+    // console.log(commisaryguide);
+    const productsForOrder = commisaryguide.products.map((product) => ({
       ProductId: product.ProductId,
       productName: product.productName,
-      
     }));
     // Fetch all stores
     const allStores = await Store.find({ storeId: { $ne: 0 } });
@@ -1084,14 +1087,14 @@ app.post("/getOrdersForCommisary", async (req, res) => {
           guideID: guideID,
           user_location: storeName,
         });
-
+        message.code = 2;
+        message.message = "Some Stores did not place the order";
+        message.noPlacedStores.push(storeName);
         var productsWithQuantity = [];
         var guideName = "System generated";
 
-
         if (!storeguide) {
-          
-          guideName = commisaryguide.guideName
+          guideName = commisaryguide.guideName;
           productsWithQuantity = commisaryguide.products.map((product) => ({
             ProductId: product.ProductId,
             productName: product.productName,
@@ -1112,47 +1115,83 @@ app.post("/getOrdersForCommisary", async (req, res) => {
 
         const submissionDate = {
           day: getDayOfWeek(currentDate),
-          date: currentDate.toLocaleDateString('en-US'),
-          time: currentDate.toLocaleTimeString('en-US'),
+          date: currentDate.toLocaleDateString("en-US"),
+          time: currentDate.toLocaleTimeString("en-US"),
         };
-        
-        
+
         // Function to get the day of the week (Sunday, Monday, etc.)
         function getDayOfWeek(date) {
-          const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+          const daysOfWeek = [
+            "Sunday",
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+          ];
           return daysOfWeek[date.getDay()];
         }
-        const newOrder = new Order({
-          guideID: guideID,
-          guideName: guideName,
-          orderLocation: storeName,
-          orderDate: date,
-          submissionDate: submissionDate,
-          orderOwner: "System",
-          products: productsWithQuantity,
-        });
-        await newOrder.save();
-        ordersForStore = await Order.findOne({
-          guideID: guideID,
-          orderDate: date,
-          orderLocation: storeName,
-        });
+
+        const isWithinCutoff = isOrderWithinCutoff(
+          date,
+          commisaryguide.cutoffTime
+        );
+
+        if (isWithinCutoff) {
+          message.code = 2;
+          message.message =
+            "Some Stores did not place the order but they still have the time";
+            productsWithQuantity = commisaryguide.products.map((product) => ({
+              ProductId: product.ProductId,
+              productName: product.productName,
+              productQuantity: -1,
+              _id: product._id,
+            }));
+        } else {
+          // console.log("Order is outside cutoff time.");
+          // console.log(storeName);
+          message.code = 3;
+          message.message =
+            "Some Stores did not place the order yet and the cut off time is over so system will place the order";
+          const newOrder = new Order({
+            guideID: guideID,
+            guideName: guideName,
+            orderLocation: storeName,
+            orderDate: date,
+            submissionDate: submissionDate,
+            orderOwner: "System",
+            products: productsWithQuantity,
+          });
+          await newOrder.save();
+          ordersForStore = await Order.findOne({
+            guideID: guideID,
+            orderDate: date,
+            orderLocation: storeName,
+          });
+        }
+      } else {
+        if (ordersForStore.orderOwner == "System") {
+
+          message.systemorder.push(storeName)
+
+        } else {
+          message.stores.push(storeName)
+        }
       }
 
       return {
         storeName,
         orderOwner: ordersForStore ? ordersForStore.orderOwner : "System", // or set a default value
-        products: ordersForStore ? ordersForStore.products : [],
+        products: ordersForStore ? ordersForStore.products :productsWithQuantity,
       };
     });
     // Wait for all store orders to be fetched
     const storeOrders = await Promise.all(storeOrdersPromises);
-
     // Convert the result to StoreOrderclass instances
     const storeOrderInstances = storeOrders.map(
       (storeOrder) => new StoreOrderclass(storeOrder)
     );
-
     // You can use the fetched data to initialize the Orderclass
     const orderData = {
       guideID,
@@ -1168,15 +1207,39 @@ app.post("/getOrdersForCommisary", async (req, res) => {
 
     res.json({
       status: "success",
-      message: "Orders fetched successfully",
-      data: orderInstance,
+      message: {
+        text: "Orders fetched successfully",
+        details: message
+      },
+            data: orderInstance,
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ status: "error", message: "Internal Server Error" });
   }
 });
+function isOrderWithinCutoff(date, cutoffTime) {
+  const orderDate = new Date(`${date} 00:00:00`);
+  const torontoTimeZone = "America/Toronto";
+  const dateInToronto = new Date().toLocaleDateString("en-US", {
+    timeZone: torontoTimeZone,
+  });
+  const timeInToronto = new Date().toLocaleTimeString("en-US", {
+    timeZone: torontoTimeZone,
+  });
 
+  // Parse date and time strings to create a Date object for current date and time
+  const currentDateTime = new Date(`${dateInToronto} ${timeInToronto}`);
+
+  // Calculate the time difference in milliseconds
+  const diff = orderDate.getTime() - currentDateTime.getTime();
+
+  // Convert the time difference to hours
+  const hoursDifference = Math.floor(diff / 1000 / 60 / 60);
+
+  // Check if the order is within the cutoff time
+  return cutoffTime < hoursDifference;
+}
 
 mongoose
   .connect(DB)
