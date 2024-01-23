@@ -50,7 +50,7 @@ const OrdersForCommisary = require('./src/routes/orderforCommisary');
 app.use('/', OrdersForCommisary);
 
 
-
+const User = require("./src/models/userModel");
 
 app.post("/login", async (req, res) => {
   try {
