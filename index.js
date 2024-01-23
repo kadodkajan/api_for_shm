@@ -37,6 +37,9 @@ const productRoutes = require("./src/routes/productRoutes");
 app.use("/", productRoutes);
 
 
+const guideRoutes = require("./src/routes/guideRoutes");
+app.use("/", guideRoutes);
+
 app.post("/login", async (req, res) => {
   try {
     const { user_id, user_auth } = req.body;
@@ -79,110 +82,9 @@ app.post("/login", async (req, res) => {
 
 
 
-const guideSchema = new Schema({
-  guideName: String,
-  products: [
-    {
-      ProductId: String,
-      productName: String,
-      procategory: {
-        procategoryName: String,
-        productionTeam: String,
-        packingTeam: String,
-      }, // Assuming the category is stored as a string, adjust as needed
-    },
-  ],
-  availableDays: [String],
-  cutoffTime: Number,
-});
-//Guide
-const Guide = mongoose.model("Guide", guideSchema);
 
-app.post("/addguide", async (req, res) => {
-  try {
-    const { guideName, products, availableDays, cutoffTime } = req.body;
-    // Create a new guide with the provided information
-    const newGuide = new Guide({
-      guideName,
-      products,
-      availableDays,
-      cutoffTime,
-    });
 
-    // Save the new guide to the database
-    await newGuide.save();
 
-    // Send a success response
-    res.json({
-      status: "success",
-      message: "Guide added successfully",
-      guide: newGuide,
-    });
-  } catch (error) {
-    // Send an error response if an exception occurs
-    console.error(error);
-    res.status(500).json({ status: "error", message: "Internal Server Error" });
-  }
-});
-app.get("/getAllGuide", async (req, res) => {
-  try {
-    // Use Mongoose to find all stores
-    const allGuide = await Guide.find();
-    const transformedGuides = allGuide.map((guide) => ({
-      _id: guide._id,
-      guideName: guide.guideName,
-    }));
-    // Send the list of stores as a JSON response
-    res.json({ status: "success", guide: transformedGuides });
-  } catch (error) {
-    // Send an error response if an exception occurs
-    console.error("Error getting all guide:", error);
-    res.status(500).json({ status: "error", message: "Internal Server Error" });
-  }
-});
-// Get guide by ID
-app.get("/getGuideById/:id", async (req, res) => {
-  try {
-    // Use Mongoose to find the guide by ID
-    const guide = await Guide.findById(req.params.id);
-
-    // Check if the guide with the provided ID exists
-    if (!guide) {
-      return res
-        .status(404)
-        .json({ status: "error", message: "Guide not found" });
-    }
-
-    // Send the guide as a JSON response
-    res.json({ status: "success", guide });
-  } catch (error) {
-    // Send an error response if an exception occurs
-    console.error("Error getting guide by ID:", error);
-    res.status(500).json({ status: "error", message: "Internal Server Error" });
-  }
-});
-
-// Delete guide by ID
-app.delete("/deleteGuideById/:id", async (req, res) => {
-  try {
-    // Use Mongoose to find and remove the guide by ID
-    const deletedGuide = await Guide.findByIdAndDelete(req.params.id);
-
-    // Check if the guide with the provided ID exists
-    if (!deletedGuide) {
-      return res
-        .status(404)
-        .json({ status: "error", message: "Guide not found" });
-    }
-
-    // Send a success response with the deleted guide
-    res.json({ status: "success", message: "Guide  deleted successfully" });
-  } catch (error) {
-    // Send an error response if an exception occurs
-    console.error("Error deleting guide by ID:", error);
-    res.status(500).json({ status: "error", message: "Internal Server Error" });
-  }
-});
 
 //storeGuideName
 const storeGuideSchema = new Schema({
